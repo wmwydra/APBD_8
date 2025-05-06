@@ -1,4 +1,5 @@
-﻿using APBD_8.Models.DTOs;
+﻿using System.Data;
+using APBD_8.Models.DTOs;
 using Microsoft.Data.SqlClient;
 
 namespace APBD_8.Services;
@@ -44,7 +45,7 @@ public class TripsService : iTripsService
     {
         var countries = new List<CountryDTO>();
         
-        // Pobierz dane krajów wyciecieczki po Id wycieczki
+        // Pobierz dane krajów wycieczki po Id wycieczki
         var cmdText = @"SELECT c.IdCountry, c.Name
             FROM Country c
             JOIN Country_Trip ct ON c.IdCountry = ct.IdCountry
@@ -100,10 +101,10 @@ public class TripsService : iTripsService
                     DateFrom = _reader.GetDateTime(3),
                     DateTo = _reader.GetDateTime(4),
                     MaxPeople = _reader.GetInt32(5),
-                    RegisteredAt = _reader.GetDateTime(_reader.GetOrdinal("RegisteredAt")),
+                    RegisteredAt = _reader.GetInt32(_reader.GetOrdinal("RegisteredAt")),
                     PaymentDate = _reader.IsDBNull(_reader.GetOrdinal("PaymentDate"))
                         ? null
-                        : _reader.GetDateTime(_reader.GetOrdinal("PaymentDate")),
+                        : _reader.GetInt32(_reader.GetOrdinal("PaymentDate")),
                         Countries = new List<CountryDTO>()
                 };
                 trip.Countries = await GetTripCountries(trip.IdTrip);
@@ -178,10 +179,10 @@ public class TripsService : iTripsService
                 VALUES (@clientId, @tripId, @registeredAt)", conn, transaction);
                 insertCmd.Parameters.AddWithValue("@clientId", clientId);
                 insertCmd.Parameters.AddWithValue("@tripId", tripId);
-                insertCmd.Parameters.AddWithValue("@registeredAt", DateTime.Now);
+                insertCmd.Parameters.AddWithValue("@registeredAt", new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds());
 
                 await insertCmd.ExecuteNonQueryAsync();
-                transaction.Commit();
+                transaction.Commit();   
                 return "OK";
             }
             catch (Exception)
@@ -219,9 +220,7 @@ public class TripsService : iTripsService
                 {
                     cmd.Parameters.AddWithValue("@tripId", tripId);
                     cmd.Parameters.AddWithValue("@clientId", clientId);
-
-                    await conn.OpenAsync();
-
+                    
                     int rowsAffected = await cmd.ExecuteNonQueryAsync();
                     if (rowsAffected == 0)
                     {

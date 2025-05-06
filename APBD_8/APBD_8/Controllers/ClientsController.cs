@@ -13,10 +13,12 @@ namespace APBD_8.Controllers
         private readonly iClientService _clientService;
         private readonly iTripsService _tripsService;
 
-        public ClientsController(iClientService clientService)
+        public ClientsController(iClientService clientService, iTripsService tripsService)
         {
             _clientService = clientService;
+            _tripsService = tripsService;
         }
+
         
         [HttpGet("{id}/trips")]
         public async Task<IActionResult> GetTripsByClientId(int id)
@@ -27,10 +29,7 @@ namespace APBD_8.Controllers
             {
                 return NotFound("Client not found.");
             }
-            var trips = await _tripsService.GetTripsByClientIdAsync(id);
-            Console.WriteLine(trips == null ? "Trips is NULL" : $"Trips found: {trips.Count}");
-
-    
+            
             client.Trips = await _tripsService.GetTripsByClientIdAsync(id);
 
             if (client.Trips == null || !client.Trips.Any())
